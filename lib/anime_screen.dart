@@ -2,52 +2,121 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class AnimeInfo {
+class Anime {
+  int animeId;
   String title;
-  String imageURL;
   String synopsis;
+  String imageURL;
+  bool alert;
 
-  AnimeInfo({required this.title, required this.imageURL, required this.synopsis});
+  Anime({
+    required this.animeId,
+    required this.title,
+    required this.synopsis,
+    required this.imageURL,
+    required this.alert
+  });
 }
 
-class AnimeScreen extends StatelessWidget {
-  final int animeId;
+class User {
+  int id;
+  String name;
+  String emailAddress;
+  var alerts;
 
-  AnimeScreen({super.key, required this.animeId});
+  User({required this.id, required this.name, required this.emailAddress, required this.alerts});
+}
 
-  final String infoURL = 'http://194.195.211.99:5000/api/getAnimeInfo';
-  String title = '';
-  String imageURL = '';
-  String synopsis = '';
+class AnimeScreen extends StatefulWidget {
+  final Anime anime;
+  final User user;
+  const AnimeScreen({super.key, required this.anime, required this.user});
 
-  _AnimeInfo() async {
-    try {
-      final response = await http.post(
-      Uri.parse(infoURL),
-        headers: <String, String>{
-          'Content-Type': 'application/json',
-      } ,
-        body: jsonEncode(<String, dynamic>{
-          'animeId': animeId,
-        }),
-      );
+  @override
+  _AnimeScreenState createState() => _AnimeScreenState();
+}
 
-      final responseData = jsonDecode(response.body);
-      if (response.statusCode == 200) {
-          title = responseData['data']['title'];
-          imageURL = responseData['data']['images']['jpg']['image_url'];
-          synopsis = responseData['data']['synopsis'];
-      } else {
-        throw Exception('${responseData['error']}');
-      }   
-    } catch (e) {
-      return AnimeInfo(title: '', imageURL: '', synopsis: '');
+class _AnimeScreenState extends State<AnimeScreen> {
+  String message = '';
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  _animeAlert() async {
+    if(widget.anime.alert) {
+      final String removeAlertURL = 'http://194.195.211.99:5000/api/removeAlert';
+      try {
+        final response = await http.post(
+          Uri.parse(removeAlertURL),
+          headers: <String, String>{
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(<String, dynamic>{
+            'id': widget.user.id,
+            'animeId': widget.anime.animeId,
+          }),
+        );
+
+        final responseData = jsonDecode(response.body);
+        if (response.statusCode == 200) {
+          setState(() {
+            widget.anime.alert = false;
+          });
+        } else {
+          throw Exception('${responseData['error']}');
+        }   
+      } catch (e) {
+        setState(() {
+          message = 'Error $e';
+        });
+      }
+    }
+    else {
+      final String addAlertURL = 'http://194.195.211.99:5000/api/addAlert';
+      try {
+        final response = await http.post(
+          Uri.parse(addAlertURL),
+          headers: <String, String>{
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(<String, dynamic>{
+            'id': widget.user.id,
+            'animeId': widget.anime.animeId,
+          }),
+        );
+
+        final responseData = jsonDecode(response.body);
+        if (response.statusCode == 200) {
+          setState(() {
+            widget.anime.alert = true;
+          });
+        } else {
+          throw Exception('${responseData['error']}');
+        }   
+      } catch (e) {
+        setState(() {
+          message = 'Error $e';
+        });
+      }
     }
   }
+  
 
   @override
   Widget build(BuildContext context) {
-    _AnimeInfo();
+    Color getColor(Set<WidgetState> states) {
+      const Set<WidgetState> interactiveStates = <WidgetState>{
+        WidgetState.pressed,
+        WidgetState.hovered,
+        WidgetState.focused,
+      };
+      if(states.any(interactiveStates.contains)) {
+        return Colors.blue;
+      }
+      return Colors.white;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Anime Information'),
@@ -60,9 +129,24 @@ class AnimeScreen extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(12.0),
             ),
-            Image.network(imageURL),
-            Text(title),
-            Text(synopsis),   
+            Image.network(widget.anime.imageURL),
+            Text(widget.anime.title),
+            Text(widget.anime.synopsis),
+            Row(
+              children: [
+                Text('Set as Alert'),
+                Checkbox(
+                  checkColor: Colors.black,
+                  fillColor: WidgetStateProperty.resolveWith(getColor),
+                  value: widget.anime.alert, 
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _animeAlert();
+                    });
+                  }             
+                )
+              ],
+            ),
           ]
         )
       )
