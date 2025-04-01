@@ -8,7 +8,8 @@ class CreateAccountScreen extends StatefulWidget {
 }
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _loginController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String _errorMessage = '';
@@ -23,8 +24,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode(<String, String>{
-          'username': _usernameController.text,
-          'email': _emailController.text,
+          'name': _nameController.text,
+          'login': _loginController.text,
+          'emailAddress': _emailController.text,
           'password': _passwordController.text,
         }),
       );
@@ -65,12 +67,16 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         child: Column(
           children: <Widget>[
             TextField(
-              controller: _usernameController,
+              controller: _nameController,
+              decoration: InputDecoration(labelText: 'Name'),
+            ),
+            TextField(
+              controller: _loginController,
               decoration: InputDecoration(labelText: 'Username'),
             ),
             TextField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(labelText: 'Email Address'),
             ),
             TextField(
               controller: _passwordController,
