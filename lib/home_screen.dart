@@ -27,7 +27,7 @@ class _HomeCallState extends State<HomeCall> {
         animeId: 1,
         title: 'Naruto',
         synopsis: 'A young ninja...',
-        imageURL: 'https://example.com/naruto.jpg',
+        imageURL: 'https://cdn.myanimelist.net/images/anime/4/19644.jpg',
         alert: true,
       );
     });
