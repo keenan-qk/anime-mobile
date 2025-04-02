@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:anime_mobile/models.dart'; // Assuming your Anime and User models are here
+import 'package:anime_mobile/models.dart';
 import 'package:http/http.dart' as http;
-import 'anime_screen.dart'; // Import for API calls (replace with your package)
+import 'anime_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   final User user;
@@ -123,7 +123,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         if (_anime != null) {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => AnimeScreen(anime: _anime!, user: widget.user)),
+                            MaterialPageRoute(builder: (context) => AnimeScreen(anime: _anime!, user: widget.user)), // anime value is null here, have to find a way to fix this
                           );
                         }
                       },

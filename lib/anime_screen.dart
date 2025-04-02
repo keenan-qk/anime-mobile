@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:anime_mobile/models.dart';
+import 'alerts_screen.dart';
 import 'search_screen.dart';
 
 
@@ -196,19 +197,6 @@ class AnimeListScreen extends StatelessWidget {
           }
         },
       ),
-    );
-  }
-}
-
-
-class AlertsScreen extends StatelessWidget {
-  final User user;
-  AlertsScreen({required this.user});
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Alerts')),
-      body: Center(child: Text('Alerts Screen')),
     );
   }
 }
