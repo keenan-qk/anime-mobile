@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'home_screen.dart';
+import 'package:anime_mobile/models.dart';
 import 'dart:convert';
+
 
 class LoginCall extends StatefulWidget {
   @override
@@ -28,7 +31,7 @@ class _LoginCallState extends State<LoginCall> {
         'password': passwordControl.text,
       });
 
-      print('Login Request Payload: $jsonData'); // Debugging: Print request
+      print('Login Request Payload: $jsonData');
 
       final response = await http.post(
         Uri.parse(loginURL),
@@ -38,15 +41,23 @@ class _LoginCallState extends State<LoginCall> {
         body: jsonData,
       );
 
-      print('Login Response Status Code: ${response.statusCode}'); // Debugging: Print status code
-      print('Login Response Body: ${response.body}'); // Debugging: Print the whole body.
+      print('Login Response Status Code: ${response.statusCode}');
+      print('Login Response Body: ${response.body}');
 
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        setState(() {
-          result = responseData['name'];
-        });
+        User loggedInUser = User(
+          id:  BigInt.parse(responseData['id'], radix: 16),
+          name: responseData['name'],
+          emailAddress: loginControl.text,
+          alerts: responseData['alerts'] ?? [],
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HomeCall(user: loggedInUser)),
+        );
       } else {
         String errorMessage = 'Login failed.';
         if (responseData.containsKey('id')) {
@@ -86,10 +97,6 @@ class _LoginCallState extends State<LoginCall> {
             ElevatedButton(
               onPressed: () {
                 _postData();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomeCall()) // Home Page Screen
-                );
               },
               child: Text('Submit'),
             ),
@@ -100,4 +107,3 @@ class _LoginCallState extends State<LoginCall> {
     );
   }
 }
-

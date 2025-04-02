@@ -1,31 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-class Anime {
-  int animeId;
-  String title;
-  String synopsis;
-  String imageURL;
-  bool alert;
-
-  Anime({
-    required this.animeId,
-    required this.title,
-    required this.synopsis,
-    required this.imageURL,
-    required this.alert
-  });
-}
-
-class User {
-  int id;
-  String name;
-  String emailAddress;
-  var alerts;
-
-  User({required this.id, required this.name, required this.emailAddress, required this.alerts});
-}
+import 'package:anime_mobile/models.dart';
 
 class AnimeScreen extends StatefulWidget {
   final Anime anime;
