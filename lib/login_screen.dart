@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:http/http.dart' as http;
-import 'home_screen.dart';
+import 'welcome_screen.dart';
 import 'package:anime_mobile/models.dart';
 import 'dart:convert';
 
