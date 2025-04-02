@@ -3,6 +3,7 @@ import 'package:anime_mobile/models.dart';
 import 'package:http/http.dart' as http;
 import 'anime_screen.dart';
 import 'search_screen.dart';
+import 'dart:convert';
 
 
 
@@ -40,8 +41,38 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   // Placeholder for API call (replace with your actual API logic)
   Future<List<Anime>> _fetchAlerts() async {
-    // ... (Your API call logic) ...
-    return []; // Placeholder
+    final String getAlertsURL = 'http://194.195.211.99:5000/api/getAnimeAlerts';
+    List<Anime> responseArray = [];
+    try {
+      final response = await http.post(
+        Uri.parse(getAlertsURL),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'id': widget.user.id,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+      if(response.statusCode == 200) {
+        for(int i = 0; i < responseData['anime'].length; i += 1)
+        {
+          responseArray.add(
+            Anime(
+              animeId: responseData['anime'][i]['animeId'],
+              title: responseData['anime'][i]['title'],
+              synopsis: responseData['anime'][i]['synopsis'],
+              imageURL: responseData['anime'][i]['imageURL'],
+              alert: true)
+          );
+        }
+      }
+    }
+    catch (e) {
+      // Placeholder for error handling
+    }
+    return responseArray; // Placeholder
   }
 
   @override
