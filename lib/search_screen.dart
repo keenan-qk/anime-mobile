@@ -1,3 +1,4 @@
+import 'package:anime_mobile/alerts_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:anime_mobile/models.dart'; // Ensure this import exists and is correct
 import 'package:http/http.dart' as http;
@@ -34,7 +35,7 @@ class _SearchScreenState extends State<SearchScreen> {
     } else if (index == 2) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => AnimeScreen(user: widget.user)),
+        MaterialPageRoute(builder: (context) => AlertsScreen(user: widget.user)),
       );
     }
   }
