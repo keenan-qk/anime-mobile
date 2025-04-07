@@ -1,61 +1,91 @@
+import 'package:anime_mobile/anime_screen.dart';
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
-import 'create_account_screen.dart';
-import 'background_container.dart'; // ✅ reusable background wrapper
+import 'package:anime_mobile/models.dart';
+import 'background_container.dart'; // ✅ Import the background wrapper
 
-class WelcomeScreen extends StatelessWidget {
+class HomeCall extends StatefulWidget {
+  final User user;
+
+  HomeCall({required this.user});
+
+  @override
+  _HomeCallState createState() => _HomeCallState();
+}
+
+class _HomeCallState extends State<HomeCall> {
+  Anime? _anime;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    await Future.delayed(const Duration(seconds: 1));
+    setState(() {
+      _anime = Anime(
+        animeId: 1,
+        title: 'Naruto',
+        synopsis: 'A young ninja...',
+        imageURL: 'https://cdn.myanimelist.net/images/anime/4/19644.jpg',
+        alert: true,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // No AppBar to match Figma
+      appBar: AppBar(
+        title: Text('Home'),
+        backgroundColor: Colors.black87,
+        automaticallyImplyLeading: false,
+      ),
       body: BackgroundContainer(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                'Welcome to My App!',
+            children: [
+              const Text(
+                'Welcome to',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white, // better contrast on the background
+                  color: Colors.white, // ✅ contrast on background
                 ),
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  fixedSize: Size(200, 45),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              const SizedBox(height: 10),
+              const Text(
+                'AniLert',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginCall()),
-                  );
-                },
-                child: Text('Login'),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 40),
               ElevatedButton(
+                onPressed: () {
+                  if (_anime != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            AnimeScreen(anime: _anime!, user: widget.user),
+                      ),
+                    );
+                  }
+                },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  fixedSize: Size(200, 45),
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => CreateAccountScreen()),
-                  );
-                },
-                child: Text('Create Account'),
+                child: const Text('Go to Anime Screen'),
               ),
             ],
           ),

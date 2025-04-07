@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'home_screen.dart';
+import 'welcome_screen.dart';
 import 'package:anime_mobile/models.dart';
-import 'background_container.dart'; // ✅ Import background wrapper
+import 'dart:convert';
+import 'background_container.dart'; // ✅ Add this line
 
 class LoginCall extends StatefulWidget {
   @override
@@ -54,10 +54,12 @@ class _LoginCallState extends State<LoginCall> {
           MaterialPageRoute(builder: (context) => HomeCall(user: loggedInUser)),
         );
       } else {
+        String errorMessage = 'Login failed.';
+        if (responseData.containsKey('id')) {
+          errorMessage = 'Login failed: ${responseData['id']}';
+        }
         setState(() {
-          result = responseData.containsKey('id')
-              ? 'Login failed: ${responseData['id']}'
-              : 'Login failed.';
+          result = errorMessage;
         });
       }
     } catch (e) {
@@ -94,10 +96,10 @@ class _LoginCallState extends State<LoginCall> {
                 onPressed: _postData,
                 child: Text('Submit'),
               ),
-              SizedBox(height: 12),
+              SizedBox(height: 10),
               Text(
                 result,
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: Colors.redAccent),
               ),
             ],
           ),
