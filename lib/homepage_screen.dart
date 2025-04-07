@@ -17,7 +17,7 @@ class WelcomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Text(
-                'Welcome to My App!',
+                'Welcome to AniLerts!',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
