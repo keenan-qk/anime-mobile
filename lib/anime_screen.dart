@@ -4,16 +4,23 @@ import 'dart:convert';
 import 'package:anime_mobile/models.dart';
 import 'alerts_screen.dart';
 import 'search_screen.dart';
-
+import 'background_container.dart'; // ✅ Ensure this file exists and works
 
 class AnimeScreen extends StatefulWidget {
-  final Anime anime;
   final User user;
-  const AnimeScreen({super.key, required this.anime, required this.user});
+  const AnimeScreen({super.key, required this.user});
 
   @override
   _AnimeScreenState createState() => _AnimeScreenState();
 }
+
+final List<Anime> animeList = [
+  Anime(animeId: 1, title: 'Sousou no Frieren', imageURL: 'https://cdn.myanimelist.net/images/anime/1015/138006.jpg', synopsis: '...', alert: false),
+  Anime(animeId: 2, title: 'Fullmetal Alchemist: Brotherhood', imageURL: 'https://cdn.myanimelist.net/images/anime/1208/94745.jpg', synopsis: '...', alert: false),
+  Anime(animeId: 3, title: 'Hunter x Hunter (2011)', imageURL: 'https://cdn.myanimelist.net/images/anime/1337/99013.jpg', synopsis: '...', alert: false),
+  Anime(animeId: 4, title: 'Mob Psycho 100 II', imageURL: 'https://cdn.myanimelist.net/images/anime/1918/96303.jpg', synopsis: '...', alert: false),
+  Anime(animeId: 5, title: 'Cowboy Bebop', imageURL: 'https://cdn.myanimelist.net/images/anime/4/19644.jpg', synopsis: '...', alert: false),
+];
 
 class _AnimeScreenState extends State<AnimeScreen> {
   String message = '';
@@ -36,17 +43,17 @@ class _AnimeScreenState extends State<AnimeScreen> {
     if (index == 0) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => AnimeListScreen(user: widget.user)),
+        MaterialPageRoute(builder: (context) => AnimeScreen(user: widget.user)),
       );
     } else if (index == 1) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => SearchScreen(user: widget.user)), // Replace with your SearchScreen
+        MaterialPageRoute(builder: (context) => SearchScreen(user: widget.user)),
       );
     } else if (index == 2) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => AlertsScreen(user: widget.user)), // Replace with your AlertsScreen
+        MaterialPageRoute(builder: (context) => AlertsScreen(user: widget.user)),
       );
     }
   }
@@ -65,57 +72,56 @@ class _AnimeScreenState extends State<AnimeScreen> {
       return Colors.white;
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Anime Information'),
-      ),
-      body: Container(
-        padding: EdgeInsets.all(12.0),
-        alignment: Alignment.center,
-        child: Column(
-          children: <Widget>[
-            Container(
-              padding: EdgeInsets.all(12.0),
+    return BackgroundContainer( // Wrap with BackgroundContainer
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Anime List'),
+          backgroundColor: Colors.transparent, // Make AppBar transparent
+          elevation: 0, // Remove AppBar shadow
+        ),
+        body: ListView.builder(
+          itemCount: animeList.length,
+          itemBuilder: (context, index) {
+            final anime = animeList[index];
+            return ListTile(
+              leading: Image.network(anime.imageURL, width: 50, height: 75),
+              title: Text(anime.title),
+              trailing: Checkbox(
+                value: anime.alert,
+                onChanged: (bool? value) {
+                  // Implement alert toggle logic here
+                  // Update the anime's alert status and make API call.
+                },
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AnimeScreen(user: widget.user)),
+                );
+              },
+            );
+          },
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.movie_filter),
+              label: 'Anime',
             ),
-            Image.network(widget.anime.imageURL),
-            Text(widget.anime.title),
-            Text(widget.anime.synopsis),
-            Row(
-              children: [
-                Text('Set as Alert'),
-                Checkbox(
-                  checkColor: Colors.black,
-                  fillColor: MaterialStateProperty.resolveWith(getColor),
-                  value: widget.anime.alert,
-                  onChanged: (bool? value) {
-                    setState(() {
-                      _animeAlert();
-                    });
-                  },
-                )
-              ],
+            BottomNavigationBarItem(
+              icon: Icon(Icons.search),
+              label: 'Search',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications),
+              label: 'Alerts',
             ),
           ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.blue,
+          onTap: _onItemTapped,
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.movie_filter),
-            label: 'Anime',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Alerts',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        onTap: _onItemTapped,
+        backgroundColor: Colors.transparent, // Make Scaffold background transparent
       ),
     );
   }
@@ -125,77 +131,80 @@ class AnimeListScreen extends StatelessWidget {
   final User user;
   AnimeListScreen({required this.user});
 
-  // Replace with your actual anime list data (fetch from API or database)
   final List<Anime> animeList = [
-    Anime(animeId: 1, title: 'Sousou no Frieren', imageURL: 'URL_TO_SOUSOU_IMAGE', synopsis: '...', alert: false),
-    Anime(animeId: 2, title: 'Fullmetal Alchemist: Brotherhood', imageURL: 'URL_TO_FMA_IMAGE', synopsis: '...', alert: false),
-    Anime(animeId: 3, title: 'Hunter x Hunter (2011)', imageURL: 'URL_TO_HUNTER_IMAGE', synopsis: '...', alert: false),
-    Anime(animeId: 4, title: 'Mob Psycho 100 II', imageURL: 'URL_TO_MOB_IMAGE', synopsis: '...', alert: false),
-    Anime(animeId: 5, title: 'Cowboy Bebop', imageURL: 'URL_TO_COWBOY_IMAGE', synopsis: '...', alert: false),
+    //Anime(animeId: 1, title: 'Sousou no Frieren', imageURL: 'https://cdn.myanimelist.net/images/anime/1015/138006.jpg', synopsis: '...', alert: false),
+    Anime(animeId: 2, title: 'Fullmetal Alchemist: Brotherhood', imageURL: 'https://cdn.myanimelist.net/images/anime/1208/94745.jpg', synopsis: '...', alert: false),
+    Anime(animeId: 3, title: 'Hunter x Hunter (2011)', imageURL: 'https://cdn.myanimelist.net/images/anime/1337/99013.jpg', synopsis: '...', alert: false),
+    Anime(animeId: 4, title: 'Mob Psycho 100 II', imageURL: 'https://cdn.myanimelist.net/images/anime/1918/96303.jpg', synopsis: '...', alert: false),
+    Anime(animeId: 5, title: 'Cowboy Bebop', imageURL: 'https://cdn.myanimelist.net/images/anime/4/19644.jpg', synopsis: '...', alert: false),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Anime List'),
-      ),
-      body: ListView.builder(
-        itemCount: animeList.length,
-        itemBuilder: (context, index) {
-          final anime = animeList[index];
-          return ListTile(
-            leading: Image.network(anime.imageURL, width: 50, height: 75),
-            title: Text(anime.title),
-            trailing: Checkbox(
-              value: anime.alert,
-              onChanged: (bool? value) {
-                // Implement alert toggle logic here
-                // Update the anime's alert status and make API call.
+    return BackgroundContainer( // Wrap with BackgroundContainer
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Anime List'),
+          backgroundColor: Colors.transparent, // Make AppBar transparent
+          elevation: 0, // Remove AppBar shadow
+        ),
+        body: ListView.builder(
+          itemCount: animeList.length,
+          itemBuilder: (context, index) {
+            final anime = animeList[index];
+            return ListTile(
+              leading: Image.network(anime.imageURL, width: 50, height: 75),
+              title: Text(anime.title),
+              trailing: Checkbox(
+                value: anime.alert,
+                onChanged: (bool? value) {
+                  // Implement alert toggle logic here
+                  // Update the anime's alert status and make API call.
+                },
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AnimeScreen(user: user)),
+                );
               },
+            );
+          },
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.movie_filter),
+              label: 'Anime',
             ),
-            onTap: () {
+            BottomNavigationBarItem(
+              icon: Icon(Icons.search),
+              label: 'Search',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications),
+              label: 'Alerts',
+            ),
+          ],
+          currentIndex: 0, // Set initial index for this screen
+          selectedItemColor: Colors.blue,
+          onTap: (index) {
+            if (index == 0) {
+              // Stay on the AnimeListScreen
+            } else if (index == 1) {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => AnimeScreen(anime: anime, user: user)),
+                MaterialPageRoute(builder: (context) => SearchScreen(user: user)),
               );
-            },
-          );
-        },
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.movie_filter),
-            label: 'Anime',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Alerts',
-          ),
-        ],
-        currentIndex: 0, // Set initial index for this screen
-        selectedItemColor: Colors.blue,
-        onTap: (index) {
-          // Handle navigation here (same logic as in AnimeScreen)
-          if (index == 0) {
-            // Stay on the AnimeListScreen
-          } else if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SearchScreen(user: user)), // Replace with your SearchScreen
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => AlertsScreen(user: user)), // Replace with your AlertsScreen
-            );
-          }
-        },
+            } else if (index == 2) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AlertsScreen(user: user)),
+              );
+            }
+          },
+        ),
+        backgroundColor: Colors.transparent, // Make Scaffold background transparent
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:anime_mobile/models.dart'; // Ensure this import exists and is c
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'anime_screen.dart';
+import 'background_container.dart'; // ✅ Ensure this file exists and works
 
 class SearchScreen extends StatefulWidget {
   final User user;
@@ -90,92 +91,96 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Anime List page'),
-      ),
-      body: Stack(
-        children: [
-          // Background Image
-          Image.asset(
-            'assets/search_background.png', // Replace with your image path
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
-          ),
-
-          // Search Bar and Results (using a Column)
-          Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
+    return BackgroundContainer( // Wrap the entire Scaffold with BackgroundContainer
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Anime List page'),
+          backgroundColor: Colors.transparent, // Make AppBar transparent
+          elevation: 0, // Remove AppBar shadow
+        ),
+        body: Stack(
+          children: [
+            // You are already using Image.asset here for a background.
+            // If BackgroundContainer provides the main background,
+            // you might want to remove or adjust this Image.asset.
+            // If you want a secondary background for just the search screen's content, keep it.
+            Image.asset(
+              'assets/search_background.png', // Replace with your image path
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            ),
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      suffixIcon: Icon(Icons.search),
                     ),
-                    suffixIcon: Icon(Icons.search),
-                  ),
-                  onChanged: (text) {
-                    setState(() {
-                      _searchText = text;
-                    });
-                    _performSearch(text); // Call your API search function
-                  },
-                ),
-              ),
-
-              // Search Results (will be populated from the API)
-              Expanded(
-                child: _searchResults.isNotEmpty
-                    ? ListView.builder(
-                  itemCount: _searchResults.length,
-                  itemBuilder: (context, index) {
-                    final anime = _searchResults[index];
-                    return ListTile(
-                      leading: Image.network(anime.imageURL, width: 50, height: 75),
-                      title: Text(anime.title),
-                      onTap: () {
-                        // You need to pass the correct anime object here
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => AnimeScreen(user: widget.user)),
-                        );
-                      },
-                    );
-                  },
-                )
-                    : Center(
-                  child: Text(
-                    _searchText.isNotEmpty ? 'No results found' : 'Search',
-                    style: TextStyle(fontSize: 24),
+                    onChanged: (text) {
+                      setState(() {
+                        _searchText = text;
+                      });
+                      _performSearch(text); // Call your API search function
+                    },
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.movie_filter),
-            label: 'Anime',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Alerts',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        onTap: _onItemTapped,
+                Expanded(
+                  child: _searchResults.isNotEmpty
+                      ? ListView.builder(
+                    itemCount: _searchResults.length,
+                    itemBuilder: (context, index) {
+                      final anime = _searchResults[index];
+                      return ListTile(
+                        leading: Image.network(anime.imageURL, width: 50, height: 75),
+                        title: Text(anime.title),
+                        onTap: () {
+                          // You need to pass the correct anime object here
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => AnimeScreen(user: widget.user)),
+                          );
+                        },
+                      );
+                    },
+                  )
+                      : Center(
+                    child: Text(
+                      _searchText.isNotEmpty ? 'No results found' : 'Search',
+                      style: TextStyle(fontSize: 24),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.movie_filter),
+              label: 'Anime',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.search),
+              label: 'Search',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications),
+              label: 'Alerts',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.blue,
+          onTap: _onItemTapped,
+        ),
+        backgroundColor: Colors.transparent, // Make Scaffold background transparent
       ),
     );
   }

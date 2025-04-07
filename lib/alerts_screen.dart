@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'anime_screen.dart';
 import 'search_screen.dart';
 import 'dart:convert';
-
+import 'background_container.dart'; // ✅ Ensure this file exists and works
 
 class AlertsScreen extends StatefulWidget {
   final User user;
@@ -53,86 +53,95 @@ class _AlertsScreenState extends State<AlertsScreen> {
       );
 
       final responseData = jsonDecode(response.body);
-      if(response.statusCode == 200) {
-        for(int i = 0; i < responseData['anime'].length; i += 1)
-        {
+      if (response.statusCode == 200) {
+        for (int i = 0; i < responseData['anime'].length; i += 1) {
           responseArray.add(
             Anime(
               animeId: responseData['anime'][i]['animeId'],
               title: responseData['anime'][i]['title'],
               synopsis: responseData['anime'][i]['synopsis'],
               imageURL: responseData['anime'][i]['imageURL'],
-              alert: true)
+              alert: true,
+            ),
           );
         }
+      } else {
+        print('Failed to fetch alerts: ${response.statusCode}');
+        // Consider showing an error message to the user
       }
+    } catch (e) {
+      print('Error fetching alerts: $e');
+      // Consider showing an error message to the user
     }
-    catch (e) {
-      // Placeholder for error handling
-    }
-    return responseArray; // Placeholder
+    return responseArray;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Anime Alerts page'),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: FutureBuilder<List<Anime>>(
-              future: _fetchAlerts(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                  final alertList = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: alertList.length,
-                    itemBuilder: (context, index) {
-                      final anime = alertList[index];
-                      return ListTile(
-                        leading: Image.network(anime.imageURL, width: 50, height: 75),
-                        title: Text(anime.title),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => AnimeScreen(user: widget.user)),
-                          );
-                        },
-                      );
-                    },
-                  );
-                } else {
-                  return Center(child: Text('No alerts found.'));
-                }
-              },
+    return BackgroundContainer( // Wrap the entire Scaffold with BackgroundContainer
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Anime Alerts page'),
+          backgroundColor: Colors.transparent, // Make AppBar transparent
+          elevation: 0, // Remove AppBar shadow
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: FutureBuilder<List<Anime>>(
+                future: _fetchAlerts(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    final alertList = snapshot.data!;
+                    return ListView.builder(
+                      itemCount: alertList.length,
+                      itemBuilder: (context, index) {
+                        final anime = alertList[index];
+                        return ListTile(
+                          leading: Image.network(anime.imageURL, width: 50, height: 75),
+                          title: Text(anime.title),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => AnimeScreen(user: widget.user)),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  } else {
+                    return Center(child: Text('No alerts found.'));
+                  }
+                },
+              ),
             ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.movie_filter),
-            label: 'Anime',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Alerts',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        onTap: _onItemTapped,
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.movie_filter),
+              label: 'Anime',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.search),
+              label: 'Search',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications),
+              label: 'Alerts',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.blue,
+          onTap: _onItemTapped,
+        ),
+        backgroundColor: Colors.transparent, // Make Scaffold background transparent
       ),
     );
   }
