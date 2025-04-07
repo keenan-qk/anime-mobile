@@ -94,7 +94,7 @@ class _SearchScreenState extends State<SearchScreen> {
     return BackgroundContainer( // Wrap the entire Scaffold with BackgroundContainer
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Anime List page'),
+          title: Text('Search for your anime'),
           backgroundColor: Colors.transparent, // Make AppBar transparent
           elevation: 0, // Remove AppBar shadow
         ),
@@ -104,19 +104,12 @@ class _SearchScreenState extends State<SearchScreen> {
             // If BackgroundContainer provides the main background,
             // you might want to remove or adjust this Image.asset.
             // If you want a secondary background for just the search screen's content, keep it.
-            Image.asset(
-              'assets/search_background.png', // Replace with your image path
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-            ),
             Column(
               children: [
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
                     decoration: InputDecoration(
-                      hintText: 'Search...',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.0),
                       ),

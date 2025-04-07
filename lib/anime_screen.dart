@@ -131,14 +131,6 @@ class AnimeListScreen extends StatelessWidget {
   final User user;
   AnimeListScreen({required this.user});
 
-  final List<Anime> animeList = [
-    //Anime(animeId: 1, title: 'Sousou no Frieren', imageURL: 'https://cdn.myanimelist.net/images/anime/1015/138006.jpg', synopsis: '...', alert: false),
-    Anime(animeId: 2, title: 'Fullmetal Alchemist: Brotherhood', imageURL: 'https://cdn.myanimelist.net/images/anime/1208/94745.jpg', synopsis: '...', alert: false),
-    Anime(animeId: 3, title: 'Hunter x Hunter (2011)', imageURL: 'https://cdn.myanimelist.net/images/anime/1337/99013.jpg', synopsis: '...', alert: false),
-    Anime(animeId: 4, title: 'Mob Psycho 100 II', imageURL: 'https://cdn.myanimelist.net/images/anime/1918/96303.jpg', synopsis: '...', alert: false),
-    Anime(animeId: 5, title: 'Cowboy Bebop', imageURL: 'https://cdn.myanimelist.net/images/anime/4/19644.jpg', synopsis: '...', alert: false),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return BackgroundContainer( // Wrap with BackgroundContainer
