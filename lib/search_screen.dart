@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:anime_mobile/models.dart';
+import 'package:anime_mobile/models.dart'; // Ensure this import exists and is correct
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'anime_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -23,49 +24,68 @@ class _SearchScreenState extends State<SearchScreen> {
     });
 
     if (index == 0) {
-      if (_anime != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => AnimeScreen(anime: _anime!, user: widget.user)),
-        );
-      } else {
-        print("Error: _anime is null."); // Handle null case
-      }
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AnimeScreen(user: widget.user)),
+      );
     } else if (index == 1) {
       // Stay on the SearchScreen
     } else if (index == 2) {
-      if (_anime != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => AnimeScreen(anime: _anime!, user: widget.user)),
-        );
-      } else {
-        print("Error: _anime is null."); // Handle null case
-      }
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AnimeScreen(user: widget.user)),
+      );
     }
   }
 
-  // Placeholder for API call (replace with your actual API logic)
   Future<void> _performSearch(String query) async {
-    // Example API call using http (replace with your API)
-    // final response = await http.get(Uri.parse('your_api_url?q=$query'));
-    // if (response.statusCode == 200) {
-    //   // Parse the response and update the UI
-    //   setState(() {
-    //     // _searchResults = parsedResults;
-    //   });
-    // } else {
-    //   // Handle error
-    // }
-    setState(() {
-      _searchResults = [
-        Anime(animeId: 1, title: 'Spirited Away', imageURL: 'https://cdn.myanimelist.net/images/anime/6/79597.jpg', synopsis: '...', alert: false),
-        Anime(animeId: 2, title: 'Fullmetal Alchemist: Brotherhood', imageURL: 'https://cdn.myanimelist.net/images/anime/1208/94745.jpg', synopsis: '...', alert: false),
-        Anime(animeId: 3, title: 'Hunter x Hunter (2011)', imageURL: 'https://cdn.myanimelist.net/images/anime/1337/99013.jpg', synopsis: '...', alert: false),
-        Anime(animeId: 4, title: 'Mob Psycho 100 II', imageURL: 'https://cdn.myanimelist.net/images/anime/1918/96303.jpg', synopsis: '...', alert: false),
-        Anime(animeId: 5, title: 'Cowboy Bebop', imageURL: 'https://cdn.myanimelist.net/images/anime/4/19644.jpg', synopsis: '...', alert: false),
-      ];
-    });
+    final Uri url = Uri.parse('http://your_server_ip:your_server_port/api/searchAnime'); // Replace with your server URL and port
+
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'searchParams': {
+            'q': query, // You can add other search parameters here if needed
+          },
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData['error'].isEmpty) {
+          final List<dynamic> data = responseData['data'];
+          setState(() {
+            _searchResults = data.map((item) => Anime.fromJson(item)).toList();
+          });
+          // You can also handle the pagination data if needed (responseData['pagination'])
+        } else {
+          // Handle the error from the server
+          setState(() {
+            _searchResults = [];
+          });
+          print('Search Error: ${responseData['error']}');
+          // Optionally show an error message to the user
+        }
+      } else {
+        // Handle HTTP errors
+        setState(() {
+          _searchResults = [];
+        });
+        print('HTTP Error: ${response.statusCode}');
+        // Optionally show an error message to the user
+      }
+    } catch (e) {
+      // Handle network or other exceptions
+      setState(() {
+        _searchResults = [];
+      });
+      print('Error during search: $e');
+      // Optionally show an error message to the user
+    }
   }
 
   @override
@@ -117,15 +137,12 @@ class _SearchScreenState extends State<SearchScreen> {
                       leading: Image.network(anime.imageURL, width: 50, height: 75),
                       title: Text(anime.title),
                       onTap: () {
-                        setState(() {
-                          _anime = anime;
-                        });
-                        if (_anime != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => AnimeScreen(anime: _anime!, user: widget.user)), // anime value is null here, have to find a way to fix this
-                          );
-                        }
+                        // You need to pass the correct anime object here
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => AnimeScreen(user: widget.user)),
+                        );
                       },
                     );
                   },

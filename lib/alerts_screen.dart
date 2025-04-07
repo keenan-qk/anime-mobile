@@ -27,7 +27,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
     if (index == 0) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => AnimeScreen(anime: _anime!, user: widget.user)),
+        MaterialPageRoute(builder: (context) => AnimeScreen(user: widget.user)),
       );
     } else if (index == 1) {
       Navigator.push(
@@ -39,7 +39,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
     }
   }
 
-  // Placeholder for API call (replace with your actual API logic)
   Future<List<Anime>> _fetchAlerts() async {
     final String getAlertsURL = 'http://194.195.211.99:5000/api/getAnimeAlerts';
     List<Anime> responseArray = [];
@@ -103,7 +102,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => AnimeScreen(anime: anime, user: widget.user)),
+                            MaterialPageRoute(builder: (context) => AnimeScreen(user: widget.user)),
                           );
                         },
                       );

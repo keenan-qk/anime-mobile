@@ -12,8 +12,17 @@ class Anime {
     required this.title,
     required this.synopsis,
     required this.imageURL,
-    required this.alert,
+    this.alert = false, // may have to change this part later?
   });
+
+  factory Anime.fromJson(Map<String, dynamic> json) {
+    return Anime(
+      animeId: json['animeId'] as int,
+      title: json['title'] as String,
+      imageURL: json['imageURL'] as String,
+      synopsis: json['synopsis'] as String? ?? '', // Handle potential null synopsis
+    );
+  }
 }
 
 class User {

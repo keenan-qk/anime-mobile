@@ -1,7 +1,8 @@
+import 'package:anime_mobile/anime_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:http/http.dart' as http;
-import 'welcome_screen.dart';
+import 'anime_summary_screen.dart';
 import 'package:anime_mobile/models.dart';
 import 'dart:convert';
 
@@ -56,7 +57,7 @@ class _LoginCallState extends State<LoginCall> {
 
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => HomeCall(user: loggedInUser)),
+          MaterialPageRoute(builder: (context) => AnimeScreen(user: loggedInUser)),
         );
       } else {
         String errorMessage = 'Login failed.';
