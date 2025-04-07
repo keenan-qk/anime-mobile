@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'home_screen.dart';
 import 'package:anime_mobile/models.dart';
-import 'dart:convert';
-
+import 'background_container.dart'; // ✅ Import background wrapper
 
 class LoginCall extends StatefulWidget {
   @override
@@ -31,8 +31,6 @@ class _LoginCallState extends State<LoginCall> {
         'password': passwordControl.text,
       });
 
-      print('Login Request Payload: $jsonData');
-
       final response = await http.post(
         Uri.parse(loginURL),
         headers: <String, String>{
@@ -41,14 +39,11 @@ class _LoginCallState extends State<LoginCall> {
         body: jsonData,
       );
 
-      print('Login Response Status Code: ${response.statusCode}');
-      print('Login Response Body: ${response.body}');
-
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
         User loggedInUser = User(
-          id:  BigInt.parse(responseData['id'], radix: 16),
+          id: BigInt.parse(responseData['id'], radix: 16),
           name: responseData['name'],
           emailAddress: loginControl.text,
           alerts: responseData['alerts'] ?? [],
@@ -59,12 +54,10 @@ class _LoginCallState extends State<LoginCall> {
           MaterialPageRoute(builder: (context) => HomeCall(user: loggedInUser)),
         );
       } else {
-        String errorMessage = 'Login failed.';
-        if (responseData.containsKey('id')) {
-          errorMessage = 'Login failed: ${responseData['id']}';
-        }
         setState(() {
-          result = errorMessage;
+          result = responseData.containsKey('id')
+              ? 'Login failed: ${responseData['id']}'
+              : 'Login failed.';
         });
       }
     } catch (e) {
@@ -79,29 +72,52 @@ class _LoginCallState extends State<LoginCall> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Login'),
+        backgroundColor: Colors.black87,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: <Widget>[
-            TextField(
-              controller: loginControl,
-              decoration: InputDecoration(labelText: 'Email'),
-            ),
-            TextField(
-              controller: passwordControl,
-              decoration: InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                _postData();
-              },
-              child: Text('Submit'),
-            ),
-            Text(result),
-          ],
+      body: BackgroundContainer(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: <Widget>[
+              _buildTextField(loginControl, 'Email'),
+              _buildTextField(passwordControl, 'Password', obscure: true),
+              SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: _postData,
+                child: Text('Submit'),
+              ),
+              SizedBox(height: 12),
+              Text(
+                result,
+                style: TextStyle(color: Colors.red),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label,
+      {bool obscure = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.9),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
     );

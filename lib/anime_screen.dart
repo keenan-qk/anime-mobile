@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:anime_mobile/models.dart';
+//import 'anime-mobile:lib/assets/images/background.jpg';
 
 class AnimeScreen extends StatefulWidget {
   final Anime anime;

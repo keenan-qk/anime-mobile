@@ -1,3 +1,5 @@
+
+
 name: anime_mobile
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
@@ -58,6 +60,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/images/background.jpg
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:
