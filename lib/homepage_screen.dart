@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart'; // Import the LoginScreen file
-import 'create_account_screen.dart'; // Import the CreateAccountScreen file
+import 'login_screen.dart';
+import 'create_account_screen.dart';
+import 'background_container.dart'; // ✅ Add this
 
 class WelcomeScreen extends StatelessWidget {
   @override
@@ -8,36 +9,59 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Welcome to My App'),
+        backgroundColor: Colors.black87,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'Welcome to My App!',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginCall()), // Navigate to LoginScreen
-                );
-              },
-              child: Text('Login'),
-            ),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CreateAccountScreen()), // Navigate to CreateAccountScreen
-                );
-              },
-              child: Text('Create Account'),
-            ),
-          ],
+      body: BackgroundContainer(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                'Welcome to My App!',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white, // 👈 better contrast
+                ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  fixedSize: Size(200, 45),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginCall()),
+                  );
+                },
+                child: Text('Login'),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  fixedSize: Size(200, 45),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CreateAccountScreen()),
+                  );
+                },
+                child: Text('Create Account'),
+              ),
+            ],
+          ),
         ),
       ),
     );

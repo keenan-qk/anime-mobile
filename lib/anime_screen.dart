@@ -5,10 +5,11 @@ import 'package:anime_mobile/models.dart';
 import 'alerts_screen.dart';
 import 'search_screen.dart';
 
-// Create new page for anime summary requiring anime
+
 class AnimeScreen extends StatefulWidget {
+  final Anime anime;
   final User user;
-  const AnimeScreen({super.key, required this.user});
+  const AnimeScreen({super.key, required this.anime, required this.user});
 
   @override
   _AnimeScreenState createState() => _AnimeScreenState();
@@ -76,22 +77,22 @@ class _AnimeScreenState extends State<AnimeScreen> {
             Container(
               padding: EdgeInsets.all(12.0),
             ),
-            // Image.network(widget.anime.imageURL),
-            // Text(widget.anime.title),
-            // Text(widget.anime.synopsis),
+            Image.network(widget.anime.imageURL),
+            Text(widget.anime.title),
+            Text(widget.anime.synopsis),
             Row(
               children: [
                 Text('Set as Alert'),
-                // Checkbox(
-                //   checkColor: Colors.black,
-                //   fillColor: MaterialStateProperty.resolveWith(getColor),
-                //   value: widget.anime.alert,
-                //   onChanged: (bool? value) {
-                //     setState(() {
-                //       _animeAlert();
-                //     });
-                //   },
-                // )
+                Checkbox(
+                  checkColor: Colors.black,
+                  fillColor: MaterialStateProperty.resolveWith(getColor),
+                  value: widget.anime.alert,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _animeAlert();
+                    });
+                  },
+                )
               ],
             ),
           ],
@@ -124,6 +125,7 @@ class AnimeListScreen extends StatelessWidget {
   final User user;
   AnimeListScreen({required this.user});
 
+  // Replace with your actual anime list data (fetch from API or database)
   final List<Anime> animeList = [
     Anime(animeId: 1, title: 'Sousou no Frieren', imageURL: 'URL_TO_SOUSOU_IMAGE', synopsis: '...', alert: false),
     Anime(animeId: 2, title: 'Fullmetal Alchemist: Brotherhood', imageURL: 'URL_TO_FMA_IMAGE', synopsis: '...', alert: false),
@@ -155,7 +157,7 @@ class AnimeListScreen extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => AnimeScreen(user: user)),
+                MaterialPageRoute(builder: (context) => AnimeScreen(anime: anime, user: user)),
               );
             },
           );

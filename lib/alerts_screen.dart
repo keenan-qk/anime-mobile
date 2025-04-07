@@ -6,7 +6,6 @@ import 'search_screen.dart';
 import 'dart:convert';
 
 
-
 class AlertsScreen extends StatefulWidget {
   final User user;
   AlertsScreen({required this.user});

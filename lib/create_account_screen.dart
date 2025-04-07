@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'background_container.dart'; // ✅ Import reusable background
 
 class CreateAccountScreen extends StatefulWidget {
   @override
@@ -32,24 +33,17 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       );
 
       if (response.statusCode == 201) {
-        // Registration successful
-        final responseData = json.decode(response.body);
-        print('Registration successful: ${responseData}');
-        // You can navigate to a success screen or show a success message.
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Registration successful!')),
         );
-        Navigator.pop(context); // Optional: Go back to the previous screen.
+        Navigator.pop(context);
       } else {
-        // Registration failed
         final responseData = json.decode(response.body);
-        print('Registration failed: ${responseData}');
         setState(() {
           _errorMessage = responseData['message'] ?? 'Registration failed.';
         });
       }
     } catch (e) {
-      print('Error during registration: $e');
       setState(() {
         _errorMessage = 'An error occurred during registration.';
       });
@@ -61,40 +55,55 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Create Account'),
+        backgroundColor: Colors.black87,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: <Widget>[
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(labelText: 'Name'),
-            ),
-            TextField(
-              controller: _loginController,
-              decoration: InputDecoration(labelText: 'Username'),
-            ),
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email Address'),
-            ),
-            TextField(
-              controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            SizedBox(height: 10),
-            if (_errorMessage.isNotEmpty)
-              Text(
-                _errorMessage,
-                style: TextStyle(color: Colors.red),
+      body: BackgroundContainer(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: <Widget>[
+              _buildTextField(_nameController, 'Name'),
+              _buildTextField(_loginController, 'Username'),
+              _buildTextField(_emailController, 'Email Address'),
+              _buildTextField(_passwordController, 'Password', obscure: true),
+              SizedBox(height: 10),
+              if (_errorMessage.isNotEmpty)
+                Text(
+                  _errorMessage,
+                  style: TextStyle(color: Colors.red),
+                ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: _registerUser,
+                child: Text('Create Account'),
               ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _registerUser,
-              child: Text('Create'),
-            ),
-          ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label,
+      {bool obscure = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.9),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
     );
