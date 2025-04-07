@@ -2,16 +2,15 @@ import 'package:anime_mobile/anime_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:anime_mobile/models.dart';
 
-class HomeCall extends StatefulWidget {
-  final User user;
-
-  HomeCall({required this.user});
+class AnimeSummaryScreen extends StatefulWidget {
+  final User? user; // Make user nullable if it might not always be passed
+  const AnimeSummaryScreen({Key? key, this.user}) : super(key: key);
 
   @override
-  _HomeCallState createState() => _HomeCallState();
+  _AnimeSummaryScreenState createState() => _AnimeSummaryScreenState();
 }
 
-class _HomeCallState extends State<HomeCall> {
+class _AnimeSummaryScreenState extends State<AnimeSummaryScreen> {
   Anime? _anime; // Nullable Anime object
 
   @override
@@ -52,7 +51,7 @@ class _HomeCallState extends State<HomeCall> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AnimeScreen(user: widget.user),
+                      builder: (context) => AnimeScreen(user: widget.user!), // Use null check if user can be null
                     ),
                   );
                 },

@@ -1,3 +1,4 @@
+import 'package:anime_mobile/anime_summary_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -90,13 +91,13 @@ class _AnimeScreenState extends State<AnimeScreen> {
                 value: anime.alert,
                 onChanged: (bool? value) {
                   // Implement alert toggle logic here
-                  // Update the anime's alert status and make API call.
+                  // Update the anime's alert status and make 1API call.
                 },
               ),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => AnimeScreen(user: widget.user)),
+                  MaterialPageRoute(builder: (context) => AnimeSummaryScreen(user: widget.user)),
                 );
               },
             );
