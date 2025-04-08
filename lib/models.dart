@@ -1,5 +1,6 @@
 // lib/models.dart
 import 'dart:math';
+
 class Anime {
   int animeId;
   String title;
@@ -15,6 +16,22 @@ class Anime {
     this.alert = false, // may have to change this part later?
   });
 
+  Anime copyWith({
+    int? animeId,
+    String? title,
+    String? synopsis,
+    String? imageURL,
+    bool? alert,
+  }) {
+    return Anime(
+      animeId: animeId ?? this.animeId,
+      title: title ?? this.title,
+      synopsis: synopsis ?? this.synopsis,
+      imageURL: imageURL ?? this.imageURL,
+      alert: alert ?? this.alert,
+    );
+  }
+
   factory Anime.fromJson(Map<String, dynamic> json) {
     return Anime(
       animeId: json['animeId'] as int,
@@ -24,12 +41,11 @@ class Anime {
     );
   }
 }
-
 class User {
-  BigInt id;
+  String id;
   String name;
   String emailAddress;
-  var alerts;
+  List<Anime>? alerts;
 
   User({required this.id, required this.name, required this.emailAddress, required this.alerts});
 }

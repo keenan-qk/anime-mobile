@@ -22,16 +22,122 @@ class _AnimeScreenState extends State<AnimeScreen> {
   bool _loading = true;
   int _currentPage = 1;
   int _itemsPerPage = 25;
+  List<int> _userAlertedAnimeIds = [];
 
   @override
   void initState() {
     super.initState();
     _fetchTopAnime();
+    _fetchUserAlerts();
   }
 
-  @override
-  void dispose() {
-    super.dispose();
+  Future<void> _fetchUserAlerts() async {
+    final url = Uri.parse('http://194.195.211.99:5000/api/getAnimeAlerts');
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'id': widget.user.id.toString(), // Convert BigInt to String
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data.containsKey('alerts') && data['alerts'] is List) {
+          setState(() {
+            _userAlertedAnimeIds = (data['alerts'] as List).cast<int>();
+            animeList = animeList.map((anime) {
+              return anime.copyWith(alert: _userAlertedAnimeIds.contains(anime.animeId));
+            }).toList();
+          });
+        } else {
+          print('Failed to fetch user alerts: ${response.statusCode}');
+        }
+      } else {
+        print('Error fetching user alerts: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error fetching user alerts: $error');
+    }
+  }
+
+  Future<void> _addAlert(int animeId) async {
+    final url = Uri.parse('http://194.195.211.99:5000/api/addAlert');
+    print('Adding alert for animeId: $animeId, userId: ${widget.user.id}');
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'id': widget.user.id.toString(), // Convert BigInt to String
+          'animeId': animeId,
+        }),
+      );
+      print('Add alert response status: ${response.statusCode}');
+      print('Add alert response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data['error'] == null || data['error'].isEmpty) {
+          setState(() {
+            _userAlertedAnimeIds.add(animeId);
+            animeList = animeList.map((anime) {
+              return anime.animeId == animeId ? anime.copyWith(alert: true) : anime;
+            }).toList();
+          });
+          print('Alert added for anime ID: $animeId');
+        } else {
+          print('Failed to add alert: ${data['error']}');
+        }
+      } else {
+        print('HTTP error adding alert: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error adding alert: $error');
+    }
+  }
+
+  Future<void> _removeAlert(int animeId) async {
+    final url = Uri.parse('http://194.195.211.99:5000/api/removeAlert');
+    print('Removing alert for animeId: $animeId, userId: ${widget.user.id}');
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'id': widget.user.id.toString(), // Convert BigInt to String
+          'animeId': animeId,
+        }),
+      );
+      print('Remove alert response status: ${response.statusCode}');
+      print('Remove alert response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data['error'] == null || data['error'].isEmpty) {
+          setState(() {
+            _userAlertedAnimeIds.remove(animeId);
+            animeList = animeList.map((anime) {
+              return anime.animeId == animeId ? anime.copyWith(alert: false) : anime;
+            }).toList();
+          });
+          print('Alert removed for anime ID: $animeId');
+        } else {
+          print('Failed to remove alert: ${data['error']}');
+        }
+      } else {
+        print('HTTP error removing alert: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error removing alert: $error');
+    }
   }
 
   Future<void> _fetchTopAnime() async {
@@ -41,8 +147,11 @@ class _AnimeScreenState extends State<AnimeScreen> {
     });
     final url = Uri.parse(
         'https://api.jikan.moe/v4/top/anime?page=$_currentPage&limit=$_itemsPerPage');
+    print('Fetching top anime - URL: $url');
     try {
       final response = await http.get(url);
+      print('Fetch top anime response status: ${response.statusCode}');
+      print('Fetch top anime response body: ${response.body}');
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['data'] != null && data['data'] is List) {
@@ -53,7 +162,7 @@ class _AnimeScreenState extends State<AnimeScreen> {
               title: item['title'] as String? ?? 'No Title',
               imageURL: item['images']['jpg']['image_url'] as String? ?? '',
               synopsis: item['synopsis'] as String? ?? 'No Synopsis',
-              alert: false,
+              alert: _userAlertedAnimeIds.contains(item['mal_id']),
             ))
                 .toList();
             _loading = false;
@@ -130,7 +239,7 @@ class _AnimeScreenState extends State<AnimeScreen> {
                   return Container(
                     margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8), // Opaque white background
+                      color: Colors.white.withOpacity(0.8),
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                     child: ListTile(
@@ -154,9 +263,16 @@ class _AnimeScreenState extends State<AnimeScreen> {
                       trailing: Checkbox(
                         value: anime.alert,
                         onChanged: (bool? value) {
-                          setState(() {
-                            animeList[index].alert = value ?? false;
-                          });
+                          if (value != null) {
+                            setState(() {
+                              animeList[index] = animeList[index].copyWith(alert: value);
+                            });
+                            if (value) {
+                              _addAlert(anime.animeId);
+                            } else {
+                              _removeAlert(anime.animeId);
+                            }
+                          }
                         },
                       ),
                       onTap: () {

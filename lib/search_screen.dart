@@ -1,11 +1,11 @@
 import 'package:anime_mobile/alerts_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:anime_mobile/models.dart';
+import 'package:anime_mobile/models.dart'; // Ensure this import exists and is correct
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'anime_screen.dart';
-import 'background_container.dart';
-import 'anime_summary_screen.dart';
+import 'background_container.dart'; // ✅ Ensure this file exists and works
+import 'anime_summary_screen.dart'; // Import AnimeSummaryScreen
 
 class SearchScreen extends StatefulWidget {
   final User user;
@@ -19,24 +19,109 @@ class _SearchScreenState extends State<SearchScreen> {
   int _selectedIndex = 1;
   String _searchText = '';
   List<Anime> _searchResults = []; // List to store search results
+  List<int> _userAlertedAnimeIds = []; // Store user's alerted anime IDs
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserAlerts();
+  }
 
-    if (index == 0) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AnimeScreen(user: widget.user)),
+  Future<void> _fetchUserAlerts() async {
+    final url = Uri.parse('http://194.195.211.99:5000/api/getAnimeAlerts'); // Replace with your actual endpoint
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'id': widget.user.id.toString(),
+        }),
       );
-    } else if (index == 1) {
-      // Stay on the SearchScreen
-    } else if (index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AlertsScreen(user: widget.user)),
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data.containsKey('alerts') && data['alerts'] is List) {
+          setState(() {
+            _userAlertedAnimeIds = (data['alerts'] as List).cast<int>();
+          });
+        }
+      } else {
+        print('Failed to fetch user alerts: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error fetching user alerts: $error');
+    }
+  }
+
+  Future<void> _addAlert(int animeId) async {
+    final url = Uri.parse('http://194.195.211.99:5000/api/addAlert'); // Replace with your actual endpoint
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'id': widget.user.id.toString(),
+          'animeId': animeId,
+        }),
       );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data['error'] == null || data['error'].isEmpty) {
+          setState(() {
+            _userAlertedAnimeIds.add(animeId);
+            // Update the local _searchResults if needed for immediate UI feedback
+            _searchResults = _searchResults.map((anime) =>
+            anime.animeId == animeId ? anime.copyWith(alert: true) : anime).toList();
+          });
+          print('Alert added for anime ID: $animeId');
+        } else {
+          print('Failed to add alert: ${data['error']}');
+        }
+      } else {
+        print('HTTP error adding alert: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error adding alert: $error');
+    }
+  }
+
+  Future<void> _removeAlert(int animeId) async {
+    final url = Uri.parse('http://194.195.211.99:5000/api/removeAlert'); // Replace with your actual endpoint
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'id': widget.user.id.toString(),
+          'animeId': animeId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data['error'] == null || data['error'].isEmpty) {
+          setState(() {
+            _userAlertedAnimeIds.remove(animeId);
+            // Update the local _searchResults if needed for immediate UI feedback
+            _searchResults = _searchResults.map((anime) =>
+            anime.animeId == animeId ? anime.copyWith(alert: false) : anime).toList();
+          });
+          print('Alert removed for anime ID: $animeId');
+        } else {
+          print('Failed to remove alert: ${data['error']}');
+        }
+      } else {
+        print('HTTP error removing alert: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error removing alert: $error');
     }
   }
 
@@ -64,7 +149,7 @@ class _SearchScreenState extends State<SearchScreen> {
               title: item['title'] as String? ?? 'No Title',
               imageURL: item['images']['jpg']['image_url'] as String? ?? '',
               synopsis: item['synopsis'] as String? ?? 'No Synopsis',
-              alert: false,
+              alert: _userAlertedAnimeIds.contains(item['mal_id']), // Set initial alert state
             ))
                 .toList();
           });
@@ -73,21 +158,38 @@ class _SearchScreenState extends State<SearchScreen> {
             _searchResults = [];
           });
           print('Invalid search response format');
-          // Optionally show an error message to the user
         }
       } else {
         setState(() {
           _searchResults = [];
         });
         print('HTTP Error: ${response.statusCode}');
-        // Optionally show an error message to the user
       }
     } catch (e) {
       setState(() {
         _searchResults = [];
       });
       print('Error during search: $e');
-      // Optionally show an error message to the user
+    }
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    if (index == 0) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AnimeScreen(user: widget.user)),
+      );
+    } else if (index == 1) {
+      // Stay on the SearchScreen
+    } else if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AlertsScreen(user: widget.user)),
+      );
     }
   }
 
@@ -149,6 +251,21 @@ class _SearchScreenState extends State<SearchScreen> {
                       title: Text(
                         anime.title,
                         style: TextStyle(color: Colors.black),
+                      ),
+                      trailing: Checkbox(
+                        value: anime.alert,
+                        onChanged: (bool? value) {
+                          if (value != null) {
+                            setState(() {
+                              _searchResults[index] = _searchResults[index].copyWith(alert: value);
+                            });
+                            if (value) {
+                              _addAlert(anime.animeId);
+                            } else {
+                              _removeAlert(anime.animeId);
+                            }
+                          }
+                        },
                       ),
                       onTap: () {
                         Navigator.push(

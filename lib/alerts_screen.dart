@@ -5,6 +5,7 @@ import 'anime_screen.dart';
 import 'search_screen.dart';
 import 'dart:convert';
 import 'background_container.dart';
+import 'anime_summary_screen.dart'; // Import AnimeSummaryScreen
 
 class AlertsScreen extends StatefulWidget {
   final User user;
@@ -16,7 +17,6 @@ class AlertsScreen extends StatefulWidget {
 
 class _AlertsScreenState extends State<AlertsScreen> {
   int _selectedIndex = 2;
-  Anime? _anime; // Nullable Anime object
 
   void _onItemTapped(int index) {
     setState(() {
@@ -40,7 +40,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   Future<List<Anime>> _fetchAlerts() async {
     final String getAlertsURL = 'http://194.195.211.99:5000/api/getAnimeAlerts';
-    List<Anime> responseArray = [];
     try {
       final response = await http.post(
         Uri.parse(getAlertsURL),
@@ -53,27 +52,54 @@ class _AlertsScreenState extends State<AlertsScreen> {
       );
 
       final responseData = jsonDecode(response.body);
-      if (response.statusCode == 200) {
-        for (int i = 0; i < responseData['anime'].length; i += 1) {
-          responseArray.add(
-            Anime(
-              animeId: responseData['anime'][i]['animeId'],
-              title: responseData['anime'][i]['title'],
-              synopsis: responseData['anime'][i]['synopsis'],
-              imageURL: responseData['anime'][i]['imageURL'],
-              alert: true,
-            ),
-          );
-        }
+      if (response.statusCode == 200 && responseData['anime'] != null) {
+        return (responseData['anime'] as List)
+            .map((item) => Anime(
+          animeId: item['animeId'] as int? ?? 0,
+          title: item['title'] as String? ?? 'No Title',
+          synopsis: item['synopsis'] as String? ?? 'No Synopsis',
+          imageURL: item['imageURL'] as String? ?? '',
+          alert: true, // All items here are alerts initially
+        ))
+            .toList();
       } else {
-        print('Failed to fetch alerts: ${response.statusCode}');
-        // Consider showing an error message to the user
+        print('Failed to fetch alerts: ${response.statusCode}, body: ${response.body}');
+        return []; // Return an empty list on failure
       }
     } catch (e) {
       print('Error fetching alerts: $e');
-      // Consider showing an error message to the user
+      return []; // Return an empty list on error
     }
-    return responseArray;
+  }
+
+  Future<void> _removeAlert(int animeId) async {
+    final url = Uri.parse('http://194.195.211.99:5000/api/removeAlert'); // Replace with your actual endpoint
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'id': widget.user.id.toString(),
+          'animeId': animeId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data['error'] == null || data['error'].isEmpty) {
+          setState(() {}); // Trigger a rebuild to reflect the removal
+          print('Alert removed for anime ID: $animeId');
+        } else {
+          print('Failed to remove alert: ${data['error']}');
+        }
+      } else {
+        print('HTTP error removing alert: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error removing alert: $error');
+    }
   }
 
   @override
@@ -81,9 +107,9 @@ class _AlertsScreenState extends State<AlertsScreen> {
     return BackgroundContainer(
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Anime Alerts page'),
-          backgroundColor: Colors.transparent, // Make AppBar transparent
-          elevation: 0, // Remove AppBar shadow
+          title: Text('Anime Alerts'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
         ),
         body: Column(
           children: [
@@ -101,21 +127,59 @@ class _AlertsScreenState extends State<AlertsScreen> {
                       itemCount: alertList.length,
                       itemBuilder: (context, index) {
                         final anime = alertList[index];
-                        return ListTile(
-                          leading: Image.network(anime.imageURL, width: 50, height: 75),
-                          title: Text(anime.title),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => AnimeScreen(user: widget.user)),
-                            );
-                          },
+                        return Container(
+                          margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: ListTile(
+                            leading: Image.network(
+                              anime.imageURL,
+                              width: 50,
+                              height: 75,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return SizedBox(
+                                  width: 50,
+                                  height: 75,
+                                  child: Icon(Icons.image_not_supported),
+                                );
+                              },
+                            ),
+                            title: Text(
+                              anime.title,
+                              style: TextStyle(color: Colors.black),
+                            ),
+                            trailing: Checkbox(
+                              value: anime.alert, // Initially true
+                              onChanged: (bool? value) {
+                                if (value != null && !value) {
+                                  _removeAlert(anime.animeId);
+                                  // Optimistically remove from the list immediately
+                                  setState(() {
+                                    if (_fetchAlerts() is List<Anime>) {
+                                      (_fetchAlerts() as List<Anime>).removeWhere((a) => a.animeId == anime.animeId);
+                                    }
+                                  });
+                                }
+                              },
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      AnimeSummaryScreen(user: widget.user, anime: anime),
+                                ),
+                              );
+                            },
+                          ),
                         );
                       },
                     );
                   } else {
-                    return Center(child: Text('No alerts found.'));
+                    return Center(child: Text('No anime alerts found.'));
                   }
                 },
               ),
@@ -141,7 +205,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
           selectedItemColor: Colors.blue,
           onTap: _onItemTapped,
         ),
-        backgroundColor: Colors.transparent, // Make Scaffold background transparent
+        backgroundColor: Colors.transparent,
       ),
     );
   }

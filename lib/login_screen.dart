@@ -44,7 +44,7 @@ class _LoginCallState extends State<LoginCall> {
 
       if (response.statusCode == 200) {
         User loggedInUser = User(
-          id: BigInt.parse(responseData['id'], radix: 16),
+          id: responseData['id'],
           name: responseData['name'],
           emailAddress: loginControl.text,
           alerts: responseData['alerts'] ?? [],

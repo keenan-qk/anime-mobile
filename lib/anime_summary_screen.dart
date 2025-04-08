@@ -1,14 +1,16 @@
+import 'dart:convert';
 import 'package:anime_mobile/anime_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:anime_mobile/models.dart';
+import 'package:http/http.dart' as http;
 import 'search_screen.dart';
 import 'alerts_screen.dart';
 import 'background_container.dart';
 
 class AnimeSummaryScreen extends StatefulWidget {
-  final User? user;
+  final User user;
   final Anime? anime;
-  const AnimeSummaryScreen({Key? key, this.anime, this.user}) : super(key: key);
+  const AnimeSummaryScreen({Key? key, this.anime, required this.user}) : super(key: key);
 
   @override
   _AnimeSummaryScreenState createState() => _AnimeSummaryScreenState();
@@ -16,6 +18,18 @@ class AnimeSummaryScreen extends StatefulWidget {
 
 class _AnimeSummaryScreenState extends State<AnimeSummaryScreen> {
   int _selectedIndex = 0;
+  bool _isAlerted = false; // Track if the current anime is alerted
+  List<int> _userAlertedAnimeIds = []; // Store user's alerted anime IDs
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserAlerts();
+    // Initialize _isAlerted based on whether the current anime is in the user's alerts
+    if (widget.anime != null) {
+      _isAlerted = _userAlertedAnimeIds.contains(widget.anime!.animeId);
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -34,6 +48,104 @@ class _AnimeSummaryScreenState extends State<AnimeSummaryScreen> {
         context,
         MaterialPageRoute(builder: (context) => AlertsScreen(user: widget.user!)),
       );
+    }
+  }
+
+  Future<void> _fetchUserAlerts() async {
+    final url = Uri.parse('http://194.195.211.99:5000/api/getAnimeAlerts'); // Replace with your actual endpoint
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'id': widget.user.id.toString(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data.containsKey('alerts') && data['alerts'] is List) {
+          setState(() {
+            _userAlertedAnimeIds = (data['alerts'] as List).cast<int>();
+            // Update _isAlerted if the current anime is already alerted
+            if (widget.anime != null) {
+              _isAlerted = _userAlertedAnimeIds.contains(widget.anime!.animeId);
+            }
+          });
+        }
+      } else {
+        print('Failed to fetch user alerts: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error fetching user alerts: $error');
+    }
+  }
+
+  Future<void> _addAlert(int animeId) async {
+    final url = Uri.parse('http://194.195.211.99:5000/api/addAlert'); // Replace with your actual endpoint
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'id': widget.user.id.toString(),
+          'animeId': animeId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data['error'] == null || data['error'].isEmpty) {
+          setState(() {
+            _isAlerted = true;
+            _userAlertedAnimeIds.add(animeId);
+          });
+          print('Alert added for anime ID: $animeId');
+        } else {
+          print('Failed to add alert: ${data['error']}');
+        }
+      } else {
+        print('HTTP error adding alert: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error adding alert: $error');
+    }
+  }
+
+  Future<void> _removeAlert(int animeId) async {
+    final url = Uri.parse('http://194.195.211.99:5000/api/removeAlert'); // Replace with your actual endpoint
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'id': widget.user.id.toString(),
+          'animeId': animeId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data['error'] == null || data['error'].isEmpty) {
+          setState(() {
+            _isAlerted = false;
+            _userAlertedAnimeIds.remove(animeId);
+          });
+          print('Alert removed for anime ID: $animeId');
+        } else {
+          print('Failed to remove alert: ${data['error']}');
+        }
+      } else {
+        print('HTTP error removing alert: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error removing alert: $error');
     }
   }
 
@@ -88,23 +200,42 @@ class _AnimeSummaryScreenState extends State<AnimeSummaryScreen> {
                       color: Colors.white.withOpacity(0.8), // Opaque white background for synopsis
                       borderRadius: BorderRadius.circular(8.0),
                     ),
-                    child: Text(
-                      widget.anime!.synopsis,
-                      style: TextStyle(color: Colors.black),
-                      textAlign: TextAlign.start,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.anime!.synopsis,
+                          style: TextStyle(color: Colors.black),
+                          textAlign: TextAlign.start,
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text('Alert:'),
+                            Checkbox(
+                              value: _isAlerted,
+                              onChanged: (bool? value) {
+                                if (value != null) {
+                                  if (value) {
+                                    _addAlert(widget.anime!.animeId);
+                                  } else {
+                                    _removeAlert(widget.anime!.animeId);
+                                  }
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                   SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AnimeScreen(user: widget.user!),
-                        ),
-                      );
+                      Navigator.pop(context); // Go back to the previous screen
                     },
-                    child: Text('Back to Anime List'),
+                    child: Text('Back'),
                   ),
                 ] else ...[
                   Container(
@@ -127,22 +258,25 @@ class _AnimeSummaryScreenState extends State<AnimeSummaryScreen> {
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-              icon: Icon(Icons.movie_filter),
+              icon: Icon(Icons.movie_filter_outlined), // Use an outlined version for a simpler look
               label: 'Anime',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.search),
+              icon: Icon(Icons.search_outlined), // Use an outlined search icon
               label: 'Search',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.notifications),
+              icon: Icon(Icons.notifications_outlined), // Use an outlined notifications icon
               label: 'Alerts',
             ),
           ],
           currentIndex: _selectedIndex,
-          selectedItemColor: Colors.blue,
-          onTap: _onItemTapped,
-          backgroundColor: Colors.transparent,
+          selectedItemColor: Colors.blue, // Color for the active item
+          unselectedItemColor: Colors.black54, // Color for inactive items (adjust as needed)
+          showSelectedLabels: true, // Ensure labels are always shown for selected item
+          showUnselectedLabels: true, // Ensure labels are always shown for unselected items
+          type: BottomNavigationBarType.fixed, // To keep icons and labels visible
+          backgroundColor: Colors.white.withOpacity(0.8), // Match the background style if needed
         ),
       ),
     );
