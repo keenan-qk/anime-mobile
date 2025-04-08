@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:anime_mobile/models.dart';
 import 'alerts_screen.dart';
 import 'search_screen.dart';
-import 'background_container.dart'; // ✅ Ensure this file exists and works
+import 'background_container.dart';
 
 class AnimeScreen extends StatefulWidget {
   final User user;
@@ -16,15 +16,17 @@ class AnimeScreen extends StatefulWidget {
 }
 
 class _AnimeScreenState extends State<AnimeScreen> {
-  List<Anime> animeList = []; // Initialize as an empty list
+  List<Anime> animeList = [];
   String message = '';
-  int _selectedIndex = 0; // For bottom navigation
-  bool _loading = true; // Add a loading state
+  int _selectedIndex = 0;
+  bool _loading = true;
+  int _currentPage = 1; // Keep track of the current page
+  int _itemsPerPage = 25; // You're already limiting to 25
 
   @override
   void initState() {
     super.initState();
-    _fetchTopAnime(); // Call the function to fetch data when the widget is created
+    _fetchTopAnime();
   }
 
   @override
@@ -33,7 +35,12 @@ class _AnimeScreenState extends State<AnimeScreen> {
   }
 
   Future<void> _fetchTopAnime() async {
-    final url = Uri.parse('https://api.jikan.moe/v4/top/anime?&limit=25');
+    setState(() {
+      _loading = true; // Set loading to true when fetching new data
+      message = ''; // Clear any previous error messages
+    });
+    final url = Uri.parse(
+        'https://api.jikan.moe/v4/top/anime?page=$_currentPage&limit=$_itemsPerPage');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -41,16 +48,15 @@ class _AnimeScreenState extends State<AnimeScreen> {
         if (data['data'] != null && data['data'] is List) {
           setState(() {
             animeList = (data['data'] as List)
-                .take(100) // Take only the top 100
                 .map((item) => Anime(
               animeId: item['mal_id'] as int? ?? 0,
               title: item['title'] as String? ?? 'No Title',
               imageURL: item['images']['jpg']['image_url'] as String? ?? '',
               synopsis: item['synopsis'] as String? ?? 'No Synopsis',
-              alert: false, // Default alert value
+              alert: false,
             ))
                 .toList();
-            _loading = false; // Data loaded
+            _loading = false;
           });
         } else {
           setState(() {
@@ -60,7 +66,8 @@ class _AnimeScreenState extends State<AnimeScreen> {
         }
       } else {
         setState(() {
-          message = 'Failed to connect to the API. Status code: ${response.statusCode}';
+          message =
+          'Failed to connect to the API. Status code: ${response.statusCode}';
           _loading = false;
         });
       }
@@ -72,8 +79,13 @@ class _AnimeScreenState extends State<AnimeScreen> {
     }
   }
 
-  _animeAlert() async {
-    // ... (Your _animeAlert logic remains the same) ...
+  void _onPageChanged(int page) {
+    if (page > 0 && page != _currentPage) {
+      setState(() {
+        _currentPage = page;
+      });
+      _fetchTopAnime();
+    }
   }
 
   void _onItemTapped(int index) {
@@ -82,7 +94,7 @@ class _AnimeScreenState extends State<AnimeScreen> {
     });
 
     if (index == 0) {
-      // No need to push to AnimeScreen again if already there
+      // No need to push to AnimeScreen again
     } else if (index == 1) {
       Navigator.push(
         context,
@@ -101,55 +113,76 @@ class _AnimeScreenState extends State<AnimeScreen> {
     return BackgroundContainer(
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Top 100 Anime'),
+          title: Text('Top Anime'),
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
         body: _loading
-            ? Center(child: CircularProgressIndicator()) // Show loading indicator
+            ? Center(child: CircularProgressIndicator())
             : animeList.isEmpty
             ? Center(child: Text(message.isNotEmpty ? message : 'No anime data available.'))
-            : ListView.builder(
-          itemCount: animeList.length,
-          itemBuilder: (context, index) {
-            final anime = animeList[index];
-            return ListTile(
-              leading: Image.network(
-                anime.imageURL,
-                width: 50,
-                height: 75,
-                errorBuilder: (context, error, stackTrace) {
-                  return SizedBox(
-                    width: 50,
-                    height: 75,
-                    child: Icon(Icons.image_not_supported),
+            : Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: animeList.length,
+                itemBuilder: (context, index) {
+                  final anime = animeList[index];
+                  return ListTile(
+                    leading: Image.network(
+                      anime.imageURL,
+                      width: 50,
+                      height: 75,
+                      errorBuilder: (context, error, stackTrace) {
+                        return SizedBox(
+                          width: 50,
+                          height: 75,
+                          child: Icon(Icons.image_not_supported),
+                        );
+                      },
+                    ),
+                    title: Text(anime.title),
+                    trailing: Checkbox(
+                      value: anime.alert,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          animeList[index].alert = value ?? false;
+                        });
+                      },
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AnimeSummaryScreen(
+                              user: widget.user, anime: anime),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
-              title: Text(anime.title),
-              trailing: Checkbox(
-                value: anime.alert,
-                onChanged: (bool? value) {
-                  // Implement alert toggle logic here, likely involving updating the state
-                  // of the specific anime in the list.
-                  setState(() {
-                    animeList[index].alert = value ?? false;
-                  });
-                  // You might want to call _animeAlert() here if it's meant to interact
-                  // with an external service based on this change.
-                },
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AnimeSummaryScreen(
-                        user: widget.user, anime: anime), // Pass the anime object
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  ElevatedButton(
+                    onPressed: _currentPage > 1
+                        ? () => _onPageChanged(_currentPage - 1)
+                        : null,
+                    child: Text('Previous'),
                   ),
-                );
-              },
-            );
-          },
+                  Text('Page $_currentPage'),
+                  ElevatedButton(
+                    onPressed: () => _onPageChanged(_currentPage + 1),
+                    child: Text('Next'),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
@@ -169,64 +202,6 @@ class _AnimeScreenState extends State<AnimeScreen> {
           currentIndex: _selectedIndex,
           selectedItemColor: Colors.blue,
           onTap: _onItemTapped,
-        ),
-        backgroundColor: Colors.transparent,
-      ),
-    );
-  }
-}
-
-class AnimeListScreen extends StatelessWidget {
-  final User user;
-  AnimeListScreen({required this.user});
-
-  @override
-  Widget build(BuildContext context) {
-    return BackgroundContainer(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Anime List'),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
-        body: Center(
-          child: Text('This screen is no longer the primary anime list display.'),
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Icon(Icons.movie_filter),
-              label: 'Anime',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.search),
-              label: 'Search',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.notifications),
-              label: 'Alerts',
-            ),
-          ],
-          currentIndex: 0,
-          selectedItemColor: Colors.blue,
-          onTap: (index) {
-            if (index == 0) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => AnimeScreen(user: user)),
-              );
-            } else if (index == 1) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SearchScreen(user: user)),
-              );
-            } else if (index == 2) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AlertsScreen(user: user)),
-              );
-            }
-          },
         ),
         backgroundColor: Colors.transparent,
       ),
