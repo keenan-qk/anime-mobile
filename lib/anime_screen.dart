@@ -20,8 +20,8 @@ class _AnimeScreenState extends State<AnimeScreen> {
   String message = '';
   int _selectedIndex = 0;
   bool _loading = true;
-  int _currentPage = 1; // Keep track of the current page
-  int _itemsPerPage = 25; // You're already limiting to 25
+  int _currentPage = 1;
+  int _itemsPerPage = 25;
 
   @override
   void initState() {
@@ -36,8 +36,8 @@ class _AnimeScreenState extends State<AnimeScreen> {
 
   Future<void> _fetchTopAnime() async {
     setState(() {
-      _loading = true; // Set loading to true when fetching new data
-      message = ''; // Clear any previous error messages
+      _loading = true;
+      message = '';
     });
     final url = Uri.parse(
         'https://api.jikan.moe/v4/top/anime?page=$_currentPage&limit=$_itemsPerPage');
@@ -94,7 +94,6 @@ class _AnimeScreenState extends State<AnimeScreen> {
     });
 
     if (index == 0) {
-      // No need to push to AnimeScreen again
     } else if (index == 1) {
       Navigator.push(
         context,
@@ -128,37 +127,48 @@ class _AnimeScreenState extends State<AnimeScreen> {
                 itemCount: animeList.length,
                 itemBuilder: (context, index) {
                   final anime = animeList[index];
-                  return ListTile(
-                    leading: Image.network(
-                      anime.imageURL,
-                      width: 50,
-                      height: 75,
-                      errorBuilder: (context, error, stackTrace) {
-                        return SizedBox(
-                          width: 50,
-                          height: 75,
-                          child: Icon(Icons.image_not_supported),
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.8), // Opaque white background
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: ListTile(
+                      leading: Image.network(
+                        anime.imageURL,
+                        width: 50,
+                        height: 75,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return SizedBox(
+                            width: 50,
+                            height: 75,
+                            child: Icon(Icons.image_not_supported),
+                          );
+                        },
+                      ),
+                      title: Text(
+                        anime.title,
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      trailing: Checkbox(
+                        value: anime.alert,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            animeList[index].alert = value ?? false;
+                          });
+                        },
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AnimeSummaryScreen(
+                                user: widget.user, anime: anime),
+                          ),
                         );
                       },
                     ),
-                    title: Text(anime.title),
-                    trailing: Checkbox(
-                      value: anime.alert,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          animeList[index].alert = value ?? false;
-                        });
-                      },
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AnimeSummaryScreen(
-                              user: widget.user, anime: anime),
-                        ),
-                      );
-                    },
                   );
                 },
               ),
