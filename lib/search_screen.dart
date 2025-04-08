@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'anime_screen.dart';
 import 'background_container.dart'; // ✅ Ensure this file exists and works
+import 'anime_summary_screen.dart'; // Import AnimeSummaryScreen
 
 class SearchScreen extends StatefulWidget {
   final User user;
@@ -18,7 +19,6 @@ class _SearchScreenState extends State<SearchScreen> {
   int _selectedIndex = 1;
   String _searchText = '';
   List<Anime> _searchResults = []; // List to store search results
-  Anime? _anime; // Nullable Anime object
 
   void _onItemTapped(int index) {
     setState(() {
@@ -41,39 +41,41 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _performSearch(String query) async {
-    final Uri url = Uri.parse('http://your_server_ip:your_server_port/api/searchAnime'); // Replace with your server URL and port
+    if (query.isEmpty) {
+      setState(() {
+        _searchResults = [];
+      });
+      return;
+    }
+
+    final Uri url = Uri.parse('https://api.jikan.moe/v4/anime?q=$query');
 
     try {
-      final response = await http.post(
-        url,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, dynamic>{
-          'searchParams': {
-            'q': query, // You can add other search parameters here if needed
-          },
-        }),
-      );
+      final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        if (responseData['error'].isEmpty) {
+        if (responseData.containsKey('data') && responseData['data'] is List) {
           final List<dynamic> data = responseData['data'];
           setState(() {
-            _searchResults = data.map((item) => Anime.fromJson(item)).toList();
+            _searchResults = data
+                .map((item) => Anime(
+              animeId: item['mal_id'] as int? ?? 0,
+              title: item['title'] as String? ?? 'No Title',
+              imageURL: item['images']['jpg']['image_url'] as String? ?? '',
+              synopsis: item['synopsis'] as String? ?? 'No Synopsis',
+              alert: false,
+            ))
+                .toList();
           });
-          // You can also handle the pagination data if needed (responseData['pagination'])
         } else {
-          // Handle the error from the server
           setState(() {
             _searchResults = [];
           });
-          print('Search Error: ${responseData['error']}');
+          print('Invalid search response format');
           // Optionally show an error message to the user
         }
       } else {
-        // Handle HTTP errors
         setState(() {
           _searchResults = [];
         });
@@ -81,7 +83,6 @@ class _SearchScreenState extends State<SearchScreen> {
         // Optionally show an error message to the user
       }
     } catch (e) {
-      // Handle network or other exceptions
       setState(() {
         _searchResults = [];
       });
@@ -92,66 +93,83 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BackgroundContainer( // Wrap the entire Scaffold with BackgroundContainer
+    return BackgroundContainer(
       child: Scaffold(
         appBar: AppBar(
           title: Text('Search for your anime'),
-          backgroundColor: Colors.transparent, // Make AppBar transparent
-          elevation: 0, // Remove AppBar shadow
+          backgroundColor: Colors.transparent,
+          elevation: 0,
         ),
-        body: Stack(
+        body: Column(
           children: [
-            // You are already using Image.asset here for a background.
-            // If BackgroundContainer provides the main background,
-            // you might want to remove or adjust this Image.asset.
-            // If you want a secondary background for just the search screen's content, keep it.
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      suffixIcon: Icon(Icons.search),
-                    ),
-                    onChanged: (text) {
-                      setState(() {
-                        _searchText = text;
-                      });
-                      _performSearch(text); // Call your API search function
-                    },
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
                   ),
+                  suffixIcon: Icon(Icons.search),
+                  hintText: 'Enter anime title',
                 ),
-                Expanded(
-                  child: _searchResults.isNotEmpty
-                      ? ListView.builder(
-                    itemCount: _searchResults.length,
-                    itemBuilder: (context, index) {
-                      final anime = _searchResults[index];
-                      return ListTile(
-                        leading: Image.network(anime.imageURL, width: 50, height: 75),
-                        title: Text(anime.title),
-                        onTap: () {
-                          // You need to pass the correct anime object here
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => AnimeScreen(user: widget.user)),
+                onChanged: (text) {
+                  setState(() {
+                    _searchText = text;
+                  });
+                  _performSearch(text); // Call the API search function
+                },
+              ),
+            ),
+            Expanded(
+              child: _searchResults.isNotEmpty
+                  ? ListView.builder(
+                itemCount: _searchResults.length,
+                itemBuilder: (context, index) {
+                  final anime = _searchResults[index];
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: ListTile(
+                      leading: Image.network(
+                        anime.imageURL,
+                        width: 50,
+                        height: 75,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return SizedBox(
+                            width: 50,
+                            height: 75,
+                            child: Icon(Icons.image_not_supported),
                           );
                         },
-                      );
-                    },
-                  )
-                      : Center(
-                    child: Text(
-                      _searchText.isNotEmpty ? 'No results found' : 'Search',
-                      style: TextStyle(fontSize: 24),
+                      ),
+                      title: Text(
+                        anime.title,
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                AnimeSummaryScreen(user: widget.user, anime: anime),
+                          ),
+                        );
+                      },
                     ),
-                  ),
+                  );
+                },
+              )
+                  : Center(
+                child: Text(
+                  _searchText.isNotEmpty ? 'No results found' : 'Search for anime by title',
+                  style: TextStyle(fontSize: 18),
+                  textAlign: TextAlign.center,
                 ),
-              ],
+              ),
             ),
           ],
         ),
@@ -174,7 +192,7 @@ class _SearchScreenState extends State<SearchScreen> {
           selectedItemColor: Colors.blue,
           onTap: _onItemTapped,
         ),
-        backgroundColor: Colors.transparent, // Make Scaffold background transparent
+        backgroundColor: Colors.transparent,
       ),
     );
   }
