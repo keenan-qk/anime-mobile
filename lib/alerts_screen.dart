@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'anime_screen.dart';
 import 'search_screen.dart';
 import 'dart:convert';
-import 'background_container.dart'; // ✅ Ensure this file exists and works
+import 'background_container.dart';
 
 class AlertsScreen extends StatefulWidget {
   final User user;
