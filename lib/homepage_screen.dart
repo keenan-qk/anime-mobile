@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'create_account_screen.dart';
-import 'background_container.dart'; // ✅ Add this
+import 'background_container.dart';
 
 class WelcomeScreen extends StatelessWidget {
   @override
@@ -21,7 +21,7 @@ class WelcomeScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white, // 👈 better contrast
+                  color: Colors.white,
                 ),
               ),
               SizedBox(height: 20),

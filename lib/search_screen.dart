@@ -1,11 +1,11 @@
 import 'package:anime_mobile/alerts_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:anime_mobile/models.dart'; // Ensure this import exists and is correct
+import 'package:anime_mobile/models.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'anime_screen.dart';
-import 'background_container.dart'; // ✅ Ensure this file exists and works
-import 'anime_summary_screen.dart'; // Import AnimeSummaryScreen
+import 'background_container.dart';
+import 'anime_summary_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   final User user;

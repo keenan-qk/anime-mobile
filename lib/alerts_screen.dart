@@ -78,7 +78,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BackgroundContainer( // Wrap the entire Scaffold with BackgroundContainer
+    return BackgroundContainer(
       child: Scaffold(
         appBar: AppBar(
           title: Text('Anime Alerts page'),

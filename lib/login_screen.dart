@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'anime_summary_screen.dart';
 import 'package:anime_mobile/models.dart';
 import 'dart:convert';
-import 'background_container.dart'; // ✅ Add this line
+import 'background_container.dart';
 
 class LoginCall extends StatefulWidget {
   @override

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'background_container.dart'; // ✅ Import reusable background
+import 'background_container.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   @override

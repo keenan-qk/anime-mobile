@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'homepage_screen.dart'; // Import your WelcomeScreen
+import 'homepage_screen.dart';
 
 void main() {
   runApp(const MyApp());

@@ -46,13 +46,13 @@ class _AnimeSummaryScreenState extends State<AnimeSummaryScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
-        backgroundColor: Colors.transparent, // Keep Scaffold background transparent
+        backgroundColor: Colors.transparent,
         body: Center(
-          child: SingleChildScrollView( // Added SingleChildScrollView for better scrolling if content is long
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start, // Align items to the start
-              crossAxisAlignment: CrossAxisAlignment.stretch, // Make children take full width
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 if (widget.anime != null) ...[
                   Image.network(
@@ -72,7 +72,7 @@ class _AnimeSummaryScreenState extends State<AnimeSummaryScreen> {
                   Container(
                     padding: const EdgeInsets.all(12.0),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8), // Opaque white background for title
+                      color: Colors.white.withOpacity(0.8),
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                     child: Text(
