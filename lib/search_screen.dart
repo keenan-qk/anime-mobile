@@ -28,7 +28,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _fetchUserAlerts() async {
-    final url = Uri.parse('http://194.195.211.99:5000/api/getAnimeAlerts'); // Replace with your actual endpoint
+    final url = Uri.parse('http://194.195.211.99:5000/api/getAnimeAlerts');
     try {
       final response = await http.post(
         url,
@@ -42,9 +42,17 @@ class _SearchScreenState extends State<SearchScreen> {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
-        if (data.containsKey('alerts') && data['alerts'] is List) {
+        if (data.containsKey('anime') && data['anime'] is List) {
+          List<int> alertedIds = [];
+          for (var animeData in data['anime']) {
+            if (animeData.containsKey('alerts') && animeData['alerts'] is List) {
+              if (animeData['alerts'].contains(widget.user.id.toString())) {
+                alertedIds.add(animeData['animeId'] as int);
+              }
+            }
+          }
           setState(() {
-            _userAlertedAnimeIds = (data['alerts'] as List).cast<int>();
+            _userAlertedAnimeIds = alertedIds;
           });
         }
       } else {
@@ -74,7 +82,7 @@ class _SearchScreenState extends State<SearchScreen> {
         if (data['error'] == null || data['error'].isEmpty) {
           setState(() {
             _userAlertedAnimeIds.add(animeId);
-            // Update the local _searchResults if needed for immediate UI feedback
+            // Update the local _searchResults
             _searchResults = _searchResults.map((anime) =>
             anime.animeId == animeId ? anime.copyWith(alert: true) : anime).toList();
           });
@@ -109,7 +117,7 @@ class _SearchScreenState extends State<SearchScreen> {
         if (data['error'] == null || data['error'].isEmpty) {
           setState(() {
             _userAlertedAnimeIds.remove(animeId);
-            // Update the local _searchResults if needed for immediate UI feedback
+            // Update the local _searchResults
             _searchResults = _searchResults.map((anime) =>
             anime.animeId == animeId ? anime.copyWith(alert: false) : anime).toList();
           });
@@ -123,6 +131,41 @@ class _SearchScreenState extends State<SearchScreen> {
     } catch (error) {
       print('Error removing alert: $error');
     }
+  }
+
+  Future<void> _showConfirmationDialog(Anime anime) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Removal'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Are you sure you want to remove "${anime.title}" from your alerts?'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+              },
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Remove'),
+              onPressed: () {
+                _removeAlert(anime.animeId);
+                Navigator.of(context).pop(); // Dismiss the dialog after removal
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _performSearch(String query) async {
@@ -152,6 +195,7 @@ class _SearchScreenState extends State<SearchScreen> {
               alert: _userAlertedAnimeIds.contains(item['mal_id']), // Set initial alert state
             ))
                 .toList();
+            print('Search Results with IDs and Alert Status: $_searchResults'); // <--- ADD THIS
           });
         } else {
           setState(() {
@@ -228,6 +272,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 itemCount: _searchResults.length,
                 itemBuilder: (context, index) {
                   final anime = _searchResults[index];
+                  final bool isAlerted = _userAlertedAnimeIds.contains(anime.animeId);
+                  print('Anime ID: ${anime.animeId}, Is Alerted: $isAlerted'); // <--- DEBUG PRINT
                   return Container(
                     margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                     decoration: BoxDecoration(
@@ -252,18 +298,16 @@ class _SearchScreenState extends State<SearchScreen> {
                         anime.title,
                         style: TextStyle(color: Colors.black),
                       ),
-                      trailing: Checkbox(
+                      trailing: isAlerted
+                          ? SizedBox.shrink()
+                          : Checkbox(
                         value: anime.alert,
                         onChanged: (bool? value) {
                           if (value != null) {
+                            _addAlert(anime.animeId);
                             setState(() {
                               _searchResults[index] = _searchResults[index].copyWith(alert: value);
                             });
-                            if (value) {
-                              _addAlert(anime.animeId);
-                            } else {
-                              _removeAlert(anime.animeId);
-                            }
                           }
                         },
                       ),

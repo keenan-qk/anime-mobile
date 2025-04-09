@@ -40,24 +40,27 @@ class _AnimeScreenState extends State<AnimeScreen> {
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode(<String, String>{
-          'id': widget.user.id.toString(), // Convert BigInt to String
+          'id': widget.user.id.toString(),
         }),
       );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
-        if (data.containsKey('alerts') && data['alerts'] is List) {
+        if (data.containsKey('anime') && data['anime'] is List) {
+          List<int> alertedIds = [];
+          for (var animeData in data['anime']) {
+            if (animeData.containsKey('alerts') && animeData['alerts'] is List) {
+              if (animeData['alerts'].contains(widget.user.id.toString())) {
+                alertedIds.add(animeData['animeId'] as int);
+              }
+            }
+          }
           setState(() {
-            _userAlertedAnimeIds = (data['alerts'] as List).cast<int>();
-            animeList = animeList.map((anime) {
-              return anime.copyWith(alert: _userAlertedAnimeIds.contains(anime.animeId));
-            }).toList();
+            _userAlertedAnimeIds = alertedIds;
           });
-        } else {
-          print('Failed to fetch user alerts: ${response.statusCode}');
         }
       } else {
-        print('Error fetching user alerts: ${response.statusCode}');
+        print('Failed to fetch user alerts: ${response.statusCode}');
       }
     } catch (error) {
       print('Error fetching user alerts: $error');
@@ -216,6 +219,41 @@ class _AnimeScreenState extends State<AnimeScreen> {
     }
   }
 
+  Future<void> _showConfirmationDialog(Anime anime) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Removal'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Are you sure you want to remove "${anime.title}" from your alerts?'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+              },
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Remove'),
+              onPressed: () {
+                _removeAlert(anime.animeId);
+                Navigator.of(context).pop(); // Dismiss the dialog after removal
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BackgroundContainer(
@@ -236,6 +274,7 @@ class _AnimeScreenState extends State<AnimeScreen> {
                 itemCount: animeList.length,
                 itemBuilder: (context, index) {
                   final anime = animeList[index];
+                  final bool isAlerted = _userAlertedAnimeIds.contains(anime.animeId);
                   return Container(
                     margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                     decoration: BoxDecoration(
@@ -260,7 +299,9 @@ class _AnimeScreenState extends State<AnimeScreen> {
                         anime.title,
                         style: TextStyle(color: Colors.black),
                       ),
-                      trailing: Checkbox(
+                      trailing: isAlerted
+                          ? SizedBox.shrink() // If already alerted, show nothing
+                          : Checkbox(
                         value: anime.alert,
                         onChanged: (bool? value) {
                           if (value != null) {
@@ -270,7 +311,7 @@ class _AnimeScreenState extends State<AnimeScreen> {
                             if (value) {
                               _addAlert(anime.animeId);
                             } else {
-                              _removeAlert(anime.animeId);
+                              _showConfirmationDialog(anime); // Show confirmation dialog
                             }
                           }
                         },

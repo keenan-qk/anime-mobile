@@ -37,22 +37,25 @@ class _AnimeSummaryScreenState extends State<AnimeSummaryScreen> {
     });
 
     if (index == 0) {
-      print("Anime Summary");
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AnimeScreen(user: widget.user)),
+      );
     } else if (index == 1) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => SearchScreen(user: widget.user!)),
+        MaterialPageRoute(builder: (context) => SearchScreen(user: widget.user)),
       );
     } else if (index == 2) {
       Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AlertsScreen(user: widget.user!)),
+          context,
+          MaterialPageRoute(builder: (context) => AlertsScreen(user: widget.user))
       );
     }
   }
 
   Future<void> _fetchUserAlerts() async {
-    final url = Uri.parse('http://194.195.211.99:5000/api/getAnimeAlerts'); // Replace with your actual endpoint
+    final url = Uri.parse('http://194.195.211.99:5000/api/getAnimeAlerts');
     try {
       final response = await http.post(
         url,
@@ -64,15 +67,20 @@ class _AnimeSummaryScreenState extends State<AnimeSummaryScreen> {
         }),
       );
 
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
-        if (data.containsKey('alerts') && data['alerts'] is List) {
-          setState(() {
-            _userAlertedAnimeIds = (data['alerts'] as List).cast<int>();
-            // Update _isAlerted if the current anime is already alerted
-            if (widget.anime != null) {
-              _isAlerted = _userAlertedAnimeIds.contains(widget.anime!.animeId);
+        if (data.containsKey('anime') && data['anime'] is List) {
+          List<int> alertedIds = [];
+          for (var animeData in data['anime']) {
+            if (animeData.containsKey('alerts') && animeData['alerts'] is List) {
+              if (animeData['alerts'].contains(widget.user.id.toString())) {
+                alertedIds.add(animeData['animeId'] as int);
+              }
             }
+          }
+          setState(() {
+            _userAlertedAnimeIds = alertedIds;
           });
         }
       } else {
@@ -80,72 +88,6 @@ class _AnimeSummaryScreenState extends State<AnimeSummaryScreen> {
       }
     } catch (error) {
       print('Error fetching user alerts: $error');
-    }
-  }
-
-  Future<void> _addAlert(int animeId) async {
-    final url = Uri.parse('http://194.195.211.99:5000/api/addAlert'); // Replace with your actual endpoint
-    try {
-      final response = await http.post(
-        url,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, dynamic>{
-          'id': widget.user.id.toString(),
-          'animeId': animeId,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-        if (data['error'] == null || data['error'].isEmpty) {
-          setState(() {
-            _isAlerted = true;
-            _userAlertedAnimeIds.add(animeId);
-          });
-          print('Alert added for anime ID: $animeId');
-        } else {
-          print('Failed to add alert: ${data['error']}');
-        }
-      } else {
-        print('HTTP error adding alert: ${response.statusCode}');
-      }
-    } catch (error) {
-      print('Error adding alert: $error');
-    }
-  }
-
-  Future<void> _removeAlert(int animeId) async {
-    final url = Uri.parse('http://194.195.211.99:5000/api/removeAlert'); // Replace with your actual endpoint
-    try {
-      final response = await http.post(
-        url,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, dynamic>{
-          'id': widget.user.id.toString(),
-          'animeId': animeId,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-        if (data['error'] == null || data['error'].isEmpty) {
-          setState(() {
-            _isAlerted = false;
-            _userAlertedAnimeIds.remove(animeId);
-          });
-          print('Alert removed for anime ID: $animeId');
-        } else {
-          print('Failed to remove alert: ${data['error']}');
-        }
-      } else {
-        print('HTTP error removing alert: ${response.statusCode}');
-      }
-    } catch (error) {
-      print('Error removing alert: $error');
     }
   }
 
@@ -209,24 +151,6 @@ class _AnimeSummaryScreenState extends State<AnimeSummaryScreen> {
                           textAlign: TextAlign.start,
                         ),
                         SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text('Alert:'),
-                            Checkbox(
-                              value: _isAlerted,
-                              onChanged: (bool? value) {
-                                if (value != null) {
-                                  if (value) {
-                                    _addAlert(widget.anime!.animeId);
-                                  } else {
-                                    _removeAlert(widget.anime!.animeId);
-                                  }
-                                }
-                              },
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),
@@ -277,6 +201,7 @@ class _AnimeSummaryScreenState extends State<AnimeSummaryScreen> {
           showUnselectedLabels: true, // Ensure labels are always shown for unselected items
           type: BottomNavigationBarType.fixed, // To keep icons and labels visible
           backgroundColor: Colors.white.withOpacity(0.8), // Match the background style if needed
+          onTap: _onItemTapped,
         ),
       ),
     );

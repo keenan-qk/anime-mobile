@@ -102,6 +102,42 @@ class _AlertsScreenState extends State<AlertsScreen> {
     }
   }
 
+  Future<void> _showConfirmationDialog(Anime anime) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Removal'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Are you sure you want to remove "${anime.title}" from your alerts?'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+              },
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Remove'),
+              onPressed: () {
+                _removeAlert(anime.animeId);
+                Navigator.of(context).pop(); // Dismiss the dialog after removal
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return BackgroundContainer(
@@ -152,10 +188,10 @@ class _AlertsScreenState extends State<AlertsScreen> {
                               style: TextStyle(color: Colors.black),
                             ),
                             trailing: Checkbox(
-                              value: anime.alert, // Initially true
+                              value: anime.alert,
                               onChanged: (bool? value) {
                                 if (value != null && !value) {
-                                  _removeAlert(anime.animeId);
+                                  _showConfirmationDialog(anime); // Show confirmation dialog
                                   // Optimistically remove from the list immediately
                                   setState(() {
                                     if (_fetchAlerts() is List<Anime>) {
